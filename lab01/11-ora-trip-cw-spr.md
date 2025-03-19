@@ -220,6 +220,7 @@ INSERT INTO reservation(trip_id, person_id, status) VALUES (4, 7, 'P');
 INSERT INTO reservation(trip_id, person_id, status) VALUES (4, 8, 'C');  
 INSERT INTO reservation(trip_id, person_id, status) VALUES (4, 9, 'P');  
 
+COMMIT;
 ```
 
 proszę pamiętać o zatwierdzeniu transakcji
@@ -247,17 +248,19 @@ w szczególności dokument: `1_ora_modyf.pdf`
 
 
 ```sql
-
-ALTER TABLE reservation ADD no_tickets NUMBER(3) NOT NULL;
-ALTER TABLE log ADD no_tickets NUMBER(3) NOT NULL;
+ALTER TABLE reservation ADD no_tickets NUMBER(3);
+ALTER TABLE log ADD no_tickets NUMBER(3);
 
 UPDATE reservation SET no_tickets = 1 WHERE reservation_id IN (1, 2, 3, 4, 5, 6);
 UPDATE reservation SET no_tickets = 2 WHERE reservation_id IN (7, 8, 9);
 UPDATE reservation SET no_tickets = 3 WHERE reservation_id = 10;
+COMMIT; 
 
-
+-- Zauważyłem, że po usunięciu danych z jakiejkolwiek tabeli, klucze główne nie zaczynają się od 1, ale od następnej wartości sprzed usunięcia.
 -- Podczas eksperymentów zauważyłem zdecydowanie lepszą wydajność pracy na danych które nie są "scommitowane". Przy pracy w MS SQL Server operacje wykonywały się znacznie wolniej niż w Oracle PL/SQL. 
 -- Ponadto uważam, że jest to lepiej zrobione, ponieważ nie da się zapomnieć BEGIN TRANSACTION jak w MS SQL Server, a w przypadku wystąpienia błędu w komendzie, skutki są mniej katastrofalne.
+
+-- Jakub Fabia
 ```
 
 ---
@@ -286,38 +289,46 @@ Proponowany zestaw widoków można rozbudować wedle uznania/potrzeb
 ```sql
 CREATE VIEW vw_reservation AS
 SELECT 
-    r.reservation_id, 
-    t.country, 
-    t.trip_date, 
-    t.trip_name, 
-    p.firstname, 
-    p.lastname, 
-    r.status, 
-    r.trip_id, 
-    r.person_id, 
-    r.no_tickets
+  r.reservation_id, 
+  t.country, 
+  t.trip_date, 
+  t.trip_name, 
+  p.firstname, 
+  p.lastname, 
+  r.status, 
+  r.trip_id, 
+  r.person_id, 
+  r.no_tickets
 FROM reservation r
 JOIN trip t ON r.trip_id = t.trip_id
 JOIN person p ON r.person_id = p.person_id;
 
-CREATE VIEW vw_trip AS
-SELECT 
-    t.trip_id, 
-    t.country, 
-    t.trip_date, 
-    t.trip_name, 
-    t.max_no_places, 
-    (t.max_no_places - COALESCE(SUM(CASE WHEN r.status IN ('P', 'N') THEN r.no_tickets ELSE 0 END), 0)) AS no_available_places
-FROM trip t
-LEFT JOIN reservation r ON t.trip_id = r.trip_id
-GROUP BY t.trip_id, t.country, t.trip_date, t.trip_name, t.max_no_places;
+-- Widok pomocniczy do obliczania ilości zajętych miejsc 
+CREATE VIEW vw_taken_places AS
+SELECT RESERVATION.TRIP_ID, SUM(no_tickets) as no_taken_places
+FROM RESERVATION
+WHERE RESERVATION.STATUS IN ('P', 'N')
+GROUP BY RESERVATION.TRIP_ID
 
-CREATE OR REPLACE VIEW vw_available_trip AS
+CREATE VIEW vw_trip AS
+SELECT
+  t.trip_id,
+  t.country,
+  t.trip_date,
+  t.trip_name,
+  t.max_no_places,
+  (t.max_no_places - vt.no_taken_places) AS no_available_places
+FROM trip t
+LEFT JOIN VW_TAKEN_PLACES vt on t.trip_id = vt.trip_id
+GROUP BY t.TRIP_ID, t.country, t.trip_date, t.trip_name, t.max_no_places, vt.no_taken_places
+
+CREATE VIEW vw_available_trip AS
 SELECT * 
 FROM vw_trip 
 WHERE trip_date > SYSDATE 
 AND no_available_places > 0;
 
+-- Jakub Fabia
 ```
 
 
