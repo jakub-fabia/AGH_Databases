@@ -8,23 +8,6 @@ Jakub Fabia<br>
 Michał Gontarz
 
 ---
-<style>
-  {
-    font-size: 16pt;
-  }
-</style> 
-
-<style scoped>
- li, p {
-    font-size: 14pt;
-  }
-</style> 
-
-<style scoped>
- pre {
-    font-size: 10pt;
-  }
-</style> 
 
 # Tabele
 
@@ -584,7 +567,7 @@ begin
     values (v_reservation_id, sysdate, 'N', p_no_tickets );
 end p_add_reservation;
 
--- Jakub Fabia
+-- Michał Gontarz
 ```
 ```sql
 create procedure p_modify_reservation_status(
@@ -634,7 +617,7 @@ begin
 
 end p_modify_reservation_status;
 
--- Michał Gontarz
+-- Jakub Fabia
 ```
 
 ```sql
