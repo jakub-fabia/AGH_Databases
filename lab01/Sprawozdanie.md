@@ -1154,8 +1154,6 @@ Należy stworzyć nowe wersje tych widoków/procedur/triggerów (np. dodając do
 
 Porównaj sposób programowania w systemie Oracle PL/SQL ze znanym ci systemem/językiem MS Sqlserver T-SQL
 
-```sql
-
--- Brakuje troche If EXISTS ale da się to dosyć łatwo obejść, na duży plus składnia :old i :new w triggerach, świetna opcja bardzo ułatwia życie.
-
+```
+Brakuje troche If EXISTS ale da się to dosyć łatwo obejść, na duży plus składnia :old i :new w triggerach, świetna opcja bardzo ułatwia życie. - Jakub Fabia
 ```
