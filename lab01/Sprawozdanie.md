@@ -1,15 +1,15 @@
-# Oracle PL/Sql
-widoki, funkcje, procedury, triggery
+# Oracle PL/SQL
+### Widoki, Funkcje, Procedury, Triggery
 
 ---
 
-Imiona i nazwiska autorów:<br>
-Jakub Fabia<br>
-Michał Gontarz
+### Imiona i nazwiska autorów:
+- Jakub Fabia
+- Michał Gontarz
 
 ---
 
-# Tabele
+## Tabele
 
 ![](./schema.png)
 
@@ -146,7 +146,7 @@ add constraint log_fk1 foreign key
 
 
 ---
-# Dane
+## Dane
 
 
 Należy wypełnić  tabele przykładowymi danymi 
@@ -737,6 +737,46 @@ Należy przygotować procedury: `p_add_reservation_4`, `p_modify_reservation_sta
 # Zadanie 4  - rozwiązanie
 
 ```sql
+create trigger TRG_LOG_ADD_RESERVATION
+    after insert
+    on RESERVATION
+    for each row
+begin
+    insert into log (reservation_id, log_date, status, no_tickets)
+    values (:new.reservation_id, sysdate,'N',:new.no_tickets);
+end;
+
+create trigger TRG_LOG_MODIFY_STATUS
+    after update of STATUS
+    on RESERVATION
+    for each row
+begin
+    insert into log (reservation_id, log_date, status,no_tickets)
+    values (:new.reservation_id, sysdate, :new.status, :old.no_tickets);
+end;
+-- Jakub Fabia
+
+create trigger TRG_LOG_MODIFY_TICKETS
+    after update of NO_TICKETS
+    on RESERVATION
+    for each row
+begin
+    insert into log (reservation_id, log_date, status, no_tickets)
+    values (:new.reservation_id, sysdate, :new.status, :new.no_tickets - :old.no_tickets);
+end;
+
+create trigger TRG_PREVENT_DELETE_RESERVATION
+    before delete
+    on RESERVATION
+    for each row
+begin
+    raise_application_error(-20006, 'Deleting reservations is not allowed');
+end;
+
+-- Michał Gontarz
+```
+
+```sql
 -- Zmodyfikowane procedury
 create procedure p_add_reservation_4(
     p_trip_id    number,
@@ -857,46 +897,6 @@ begin
     update reservation
     set no_tickets = p_no_tickets
     where reservation_id = p_reservation_id;
-end;
-
--- Michał Gontarz
-```
-
-```sql
-create trigger TRG_LOG_ADD_RESERVATION
-    after insert
-    on RESERVATION
-    for each row
-begin
-    insert into log (reservation_id, log_date, status, no_tickets)
-    values (:new.reservation_id, sysdate,'N',:new.no_tickets);
-end;
-
-create trigger TRG_LOG_MODIFY_STATUS
-    after update of STATUS
-    on RESERVATION
-    for each row
-begin
-    insert into log (reservation_id, log_date, status,no_tickets)
-    values (:new.reservation_id, sysdate, :new.status, :old.no_tickets);
-end;
--- Jakub Fabia
-
-create trigger TRG_LOG_MODIFY_TICKETS
-    after update of NO_TICKETS
-    on RESERVATION
-    for each row
-begin
-    insert into log (reservation_id, log_date, status, no_tickets)
-    values (:new.reservation_id, sysdate, :new.status, :new.no_tickets - :old.no_tickets);
-end;
-
-create trigger TRG_PREVENT_DELETE_RESERVATION
-    before delete
-    on RESERVATION
-    for each row
-begin
-    raise_application_error(-20006, 'Deleting reservations is not allowed');
 end;
 
 -- Michał Gontarz
