@@ -1091,8 +1091,45 @@ alter table trip add
 
 ```sql
 
--- wyniki, kod, zrzuty ekranów, komentarz ...
+-- polecenie przeliczające wartość `no_available_places`
+update trip t
+set no_available_places = max_no_places -
+    (select nvl(sum(r.no_tickets), 0)
+     from reservation r
+     where r.trip_id = t.trip_id
+       and r.status in ('N', 'P'));
 
+-- zmienione widoki
+
+-- widok vw_available_trip
+create view vw_available_trip_6 as
+select trip_id, trip_name, country, trip_date, max_no_places, no_available_places
+from trip
+where trip_date > sysdate
+and no_available_places > 0
+
+-- widok vw_reservation
+create view vw_reservation as
+select
+  r.reservation_id,
+  t.country,
+  t.trip_date,
+  t.trip_name,
+  p.firstname,
+  p.lastname,
+  r.status,
+  r.trip_id,
+  r.person_id,
+  r.no_tickets
+from reservation r
+join trip t on r.trip_id = t.trip_id
+join person p on r.person_id = p.person_id
+
+-- widok vw_trip - staje się redundanty, ponieważ sprowadza się do wykonania polecenia: select * from trip
+
+-- zmiany w funkcjach polegały jedynie na zmianie nazyw widoku z którego korzystam; przykładowa zmiana: 
+-- z ... from vw_available_trip 
+-- na ... from vw_available_trip_6
 ```
 
 
@@ -1145,7 +1182,179 @@ Należy stworzyć nowe wersje tych widoków/procedur/triggerów (np. dodając do
 
 ```sql
 
--- wyniki, kod, zrzuty ekranów, komentarz ...
+-- trigger wyzwalany przy dodawaniu rezerwacji
+create trigger trg_add_reservation_tickets_6b
+    before insert
+    on reservation
+    for each row
+declare
+    v_available_places int;
+    v_trip_date date;
+begin
+    select no_available_places, trip_date into v_available_places, v_trip_date from trip where trip.TRIP_ID = :new.trip_id;
+    if v_trip_date < sysdate then
+        raise_application_error(-20001, 'The trip has already started.');
+    end if;
+    if :new.NO_TICKETS > v_available_places then
+        raise_application_error(-20002, 'There is not enough available tickets');
+    end if;
+
+    update trip
+    set no_available_places = no_available_places - :new.NO_TICKETS
+    where trip_id = :new.trip_id;
+end;
+
+-- trigger wyzwalany przy modyfikacji statusu rezerwacji
+create trigger trg_reservation_status_update_6b
+    before update of status
+    on reservation
+    for each row
+declare
+    v_trip_date date;
+    v_available_places int;
+    v_no_tickets int;
+begin
+    select trip_date, no_available_places
+    into v_trip_date, v_available_places
+    from trip
+    where trip_id = :old.trip_id;
+
+    v_no_tickets := :old.no_tickets;
+
+    if v_trip_date < sysdate then
+        raise_application_error(-20001, 'The trip has already started.');
+    end if;
+
+    if :old.status IN ('N', 'P') and :new.status = 'C' then
+        update trip
+        set no_available_places = no_available_places + v_no_tickets
+        where trip_id = :OLD.trip_id;
+    end if;
+
+    if :old.status = 'C' and :new.status in ('N', 'P') then
+        if v_no_tickets > v_available_places then
+            raise_application_error(-20002, 'There are not enough available tickets.');
+        end if;
+
+        update trip
+        set no_available_places = no_available_places - v_no_tickets
+        where trip_id = :old.trip_id;
+    end if;
+end;
+
+-- trigger wyzwalany przy zmianie liczby biletów
+create trigger trg_reservation_tickets_update_6b
+    before update
+    on reservation
+    for each row
+declare
+    v_trip_date date;
+    v_available_places int;
+    v_old_no_tickets int;
+    v_new_no_tickets int;
+    v_diff int;
+begin
+    select trip_date, no_available_places
+    into v_trip_date, v_available_places
+    from trip
+    where trip_id = :old.trip_id;
+
+    if v_trip_date < sysdate then
+        raise_application_error(-20001, 'The trip has already started.');
+    end if;
+
+    v_old_no_tickets := :old.no_tickets;
+    v_new_no_tickets := :new.no_tickets;
+
+    v_diff := v_new_no_tickets - v_old_no_tickets;
+
+    if v_diff > 0 and v_diff > v_available_places then
+        raise_appliaction_error(-20002, 'There are not enough available tickets.');
+    end if;
+
+    update trip
+    set no_available_places = no_available_places - v_diff
+    where trip_id = :old.trip_id;
+end;
+
+-- zmienione procedury
+
+-- procedura dodwania rezerwacji
+create procedure p_add_reservation_6b(
+    p_trip_id    number,
+    p_person_id  number,
+    p_no_tickets number
+) is
+begin
+    if not f_valid_person_id(p_person_id) then
+        RAISE_APPLICATION_ERROR(-20001, 'There is no person with the given ID');
+    end if;
+    if not F_VALID_TRIP_ID(p_trip_id) then
+        raise_application_error(-20002, 'There is no trip with given id');
+    end if;
+    if p_no_tickets < 1 then
+        raise_application_error(-20003, 'Number of tickets must be positive');
+    end if;
+
+    insert into reservation (trip_id, person_id, status, no_tickets)
+    values (p_trip_id, p_person_id, 'N', p_no_tickets);
+end;
+
+-- procedura modyfikująca status rezerwacji
+create procedure p_add_reservation_6b(
+    p_trip_id    number,
+    p_person_id  number,
+    p_no_tickets number
+) is
+begin
+    if not f_valid_person_id(p_person_id) then
+        RAISE_APPLICATION_ERROR(-20001, 'There is no person with the given ID');
+    end if;
+    if not F_VALID_TRIP_ID(p_trip_id) then
+        raise_application_error(-20002, 'There is no trip with given id');
+    end if;
+    if p_no_tickets < 1 then
+        raise_application_error(-20003, 'Number of tickets must be positive');
+    end if;
+
+    insert into reservation (trip_id, person_id, status, no_tickets)
+    values (p_trip_id, p_person_id, 'N', p_no_tickets);
+end;
+
+-- procedura zmieniająca liczbę biletów
+create procedure p_modify_reservation_6b(
+    p_reservation_id int,
+    p_no_tickets     int
+) is
+    v_status         varchar2(1);
+    v_no_tickets     int;
+begin
+    if not F_VALID_RESERVATION_ID(p_reservation_id) then
+        raise_application_error(-20001, 'There is no reservation with given id');
+    end if;
+    if p_no_tickets < 1 then
+        raise_application_error(-20003, 'Number of tickets must be positive');
+    end if;
+
+    select status, NO_TICKETS
+    into v_status, v_no_tickets
+    from reservation
+    where reservation_id = p_reservation_id;
+
+    if v_status = 'C' then
+        raise_application_error(-20004, 'This reservation is cancelled');
+    end if;
+
+    if v_no_tickets = p_no_tickets then
+        raise_application_error(-20005, 'This is current number of tickets');
+    end if;
+
+    update reservation
+    set no_tickets = p_no_tickets
+    where reservation_id = p_reservation_id;
+end;
+
+-- funkcje, widoki oraz triggery dodające rekory w tabeli LOG pozostają bez zmian
 
 ```
 
