@@ -902,6 +902,46 @@ end;
 -- Michał Gontarz
 ```
 
+```sql
+create trigger TRG_LOG_ADD_RESERVATION
+    after insert
+    on RESERVATION
+    for each row
+begin
+    insert into log (reservation_id, log_date, status, no_tickets)
+    values (:new.reservation_id, sysdate,'N',:new.no_tickets);
+end;
+
+create trigger TRG_LOG_MODIFY_STATUS
+    after update of STATUS
+    on RESERVATION
+    for each row
+begin
+    insert into log (reservation_id, log_date, status,no_tickets)
+    values (:new.reservation_id, sysdate, :new.status, :old.no_tickets);
+end;
+-- Jakub Fabia
+
+create trigger TRG_LOG_MODIFY_TICKETS
+    after update of NO_TICKETS
+    on RESERVATION
+    for each row
+begin
+    insert into log (reservation_id, log_date, status, no_tickets)
+    values (:new.reservation_id, sysdate, :new.status, :new.no_tickets);
+end;
+
+create trigger TRG_PREVENT_DELETE_RESERVATION
+    before delete
+    on RESERVATION
+    for each row
+begin
+    raise_application_error(-20006, 'Deleting reservations is not allowed');
+end;
+
+-- Michał Gontarz
+```
+
 
 ---
 # Zadanie 5  - triggery
@@ -1098,15 +1138,16 @@ set no_available_places = max_no_places -
      from reservation r
      where r.trip_id = t.trip_id
        and r.status in ('N', 'P'));
+-- Michał Gontarz
 
 -- zmienione widoki
-
 -- widok vw_available_trip
 create view vw_available_trip_6 as
 select trip_id, trip_name, country, trip_date, max_no_places, no_available_places
 from trip
 where trip_date > sysdate
 and no_available_places > 0
+-- Jakub Fabia
 
 -- widok vw_reservation
 create view vw_reservation as
@@ -1124,6 +1165,7 @@ select
 from reservation r
 join trip t on r.trip_id = t.trip_id
 join person p on r.person_id = p.person_id
+-- Michał Gontarz
 
 -- widok vw_trip - staje się redundanty, ponieważ sprowadza się do wykonania polecenia: select * from trip
 
@@ -1183,6 +1225,7 @@ begin
     set no_available_places = v_no_available_places - p_no_tickets
     where trip_id = p_trip_id;
 end;
+-- Michał Gontarz
 
 -- zmieniony trigger wyzwalany przy dodwaniu rezerwacji
 create trigger trg_add_reservation_tickets_6a
@@ -1201,6 +1244,7 @@ begin
         raise_application_error(-20002, 'There is not enough available tickets');
     end if;
 end;
+-- Jakub Fabia
 
 -- procedura modyfikująca status rezerwacji
 create or replace procedure p_modify_reservation_status_6a(
@@ -1246,6 +1290,7 @@ begin
         where trip_id = v_trip_id;
     end if;
 end;
+-- Michał Gontarz
 
 -- zmieniony trigger wyzwalany podczas zmiany statusu rezerwacji
 create or replace trigger trg_reservation_status_update_6a
@@ -1272,6 +1317,7 @@ begin
         raise_application_error(-20002, 'There are not enough available tickets.');
     end if;
 end;
+-- Jakub Fabia
 
 -- procedura zmieniająca liczbę biletów
 create or replace procedure p_modify_reservation_6a(
@@ -1310,6 +1356,7 @@ begin
     set no_available_places = no_available_places - (p_no_tickets - v_no_tickets)
     where trip_id = v_trip_id;
 end;
+-- Michał Gontarz
 
 -- zmieniony trigger wyzwalany podczas zmiany liczby biletów
 create trigger trg_reservation_tickets_update_6a
@@ -1341,6 +1388,7 @@ begin
         raise_application_error(-20002, 'There are not enough available tickets.');
     end if;
 end;
+-- Jakub Fabia
 
 -- funkcje, widoki oraz triggery dodające rekory w tabeli LOG pozostają bez zmian
 
@@ -1390,6 +1438,7 @@ begin
     set no_available_places = no_available_places - :new.NO_TICKETS
     where trip_id = :new.trip_id;
 end;
+-- Michał Gontarz
 
 -- trigger wyzwalany przy modyfikacji statusu rezerwacji
 create trigger trg_reservation_status_update_6b
@@ -1428,6 +1477,7 @@ begin
         where trip_id = :old.trip_id;
     end if;
 end;
+-- Jakub Fabia
 
 -- trigger wyzwalany przy zmianie liczby biletów
 create trigger trg_reservation_tickets_update_6b
@@ -1463,6 +1513,7 @@ begin
     set no_available_places = no_available_places - v_diff
     where trip_id = :old.trip_id;
 end;
+-- Michał Gontarz
 
 -- zmienione procedury
 
@@ -1486,6 +1537,7 @@ begin
     insert into reservation (trip_id, person_id, status, no_tickets)
     values (p_trip_id, p_person_id, 'N', p_no_tickets);
 end;
+-- Jakub Fabia
 
 -- procedura modyfikująca status rezerwacji
 create procedure p_add_reservation_6b(
@@ -1507,6 +1559,7 @@ begin
     insert into reservation (trip_id, person_id, status, no_tickets)
     values (p_trip_id, p_person_id, 'N', p_no_tickets);
 end;
+-- Michał Gontarz
 
 -- procedura zmieniająca liczbę biletów
 create procedure p_modify_reservation_6b(
@@ -1540,6 +1593,7 @@ begin
     set no_tickets = p_no_tickets
     where reservation_id = p_reservation_id;
 end;
+-- Jakub Fabia
 
 -- funkcje, widoki oraz triggery dodające rekory w tabeli LOG pozostają bez zmian
 
@@ -1552,4 +1606,6 @@ Porównaj sposób programowania w systemie Oracle PL/SQL ze znanym ci systemem/j
 
 ```
 Brakuje troche If EXISTS ale da się to dosyć łatwo obejść, na duży plus składnia :old i :new w triggerach, świetna opcja bardzo ułatwia życie. - Jakub Fabia
+
+PL/SQL jest bardziej modularny i zorientowany na strukturę blokową, dzięki czemu przyjemniej się pracuje na nim. Jego składnia trochę się różni, natomiast wydaje się, że bardziej przypomina typowy język programowania przez to łatwiej się go używa i można popełnić mniej błędów.  - Michał Gontarz
 ```
