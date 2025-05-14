@@ -2091,6 +2091,9 @@ db.orders.insertOne({
   Freight: 25.0
 });
 
+db.products.find({ ProductName: { $in: ["Chai", "Ikura"] } }, { ProductID: 1, ProductName: 1 })
+// wyniki tego zapytania to id produktów, które chcemy dodać do zamówienia (1 i 10) - użyte poniżej
+
 db.orderdetails.insertMany([
   {
     OrderID: 99999,
