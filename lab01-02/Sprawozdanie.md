@@ -292,6 +292,7 @@ JOIN person p ON r.person_id = p.person_id;
 ```sql
 -- Widok pomocniczy do obliczania ilości zajętych miejsc 
 
+CREATE OR REPLACE VIEW VW_TAKEN_PLACES AS 
 SELECT TRIP.TRIP_ID, 
 COALESCE(SUM(RESERVATION.no_tickets), 0) AS no_taken_places
 FROM TRIP
