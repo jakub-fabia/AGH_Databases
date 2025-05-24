@@ -1,4 +1,4 @@
-# Sprawozdanie Bazy Danych laboratorium 4 
+# Sprawozdanie Bazy Danych laboratorium 5
 ## Entity Framework
 
 ### Jakub Fabia, Michał Gontarz
