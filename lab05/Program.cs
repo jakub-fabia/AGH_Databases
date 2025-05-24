@@ -6,32 +6,22 @@
         while (true)
         {
             Console.WriteLine();
-            Console.WriteLine("1 - Create Product");
-            Console.WriteLine("2 - View Products");
-            Console.WriteLine("3 - Place Order");
-            Console.WriteLine("4 - View Orders");
-            Console.WriteLine("5 - Exit");
+            Console.WriteLine("1 - Create Company");
+            Console.WriteLine("2 - View Companies");
+            Console.WriteLine("3 - Exit");
             Console.WriteLine("Select an option:");
             string option = Console.ReadLine();
             switch (option)
             {
                 case "1":
-                    createProduct(productContext);
+                    createCompany(productContext);
                     Thread.Sleep(1000);
                     break;
                 case "2":
-                    viewProducts(productContext);
+                    viewCompanies(productContext);
                     Thread.Sleep(1000);
                     break;
                 case "3":
-                    placeOrder(productContext);
-                    Thread.Sleep(1000);
-                    break;
-                case "4":
-                    ViewOrders(productContext);
-                    Thread.Sleep(1000);
-                    break;
-                case "5":
                     return;
                 default:
                     Console.WriteLine("Invalid option. Please try again.");
@@ -39,79 +29,83 @@
             }
         }
     }
-    private static void createProduct(ProdContext productContext)
+    private static void createCompany(ProdContext productContext)
     {
-        Console.WriteLine("Input product name:");
-        string ProductName = Console.ReadLine();
-        Console.WriteLine("Input product units in stock:");
-        int UnitsInStock = Convert.ToInt32(Console.ReadLine());
-        productContext.Products.Add(new Product { ProductName = ProductName, UnitsInStock = UnitsInStock });
-        productContext.SaveChanges();
-    }
-    private static void viewProducts(ProdContext productContext)
-    {
-        var productsQuery = from prod in productContext.Products select prod;
-        Console.WriteLine();
-        Console.WriteLine("Products List:");
-        foreach (var pName in productsQuery)
+        Console.WriteLine("Enter Company Name:");
+        string companyName = Console.ReadLine();
+        Console.WriteLine("Enter Street:");
+        string street = Console.ReadLine();
+        Console.WriteLine("Enter City:");
+        string city = Console.ReadLine();
+        Console.WriteLine("Enter Zip:");
+        string zip = Console.ReadLine();
+        Console.WriteLine("Choose Company Type:");
+        Console.WriteLine("1 - Customer");
+        Console.WriteLine("2 - Supplier");
+        string companyType = Console.ReadLine();
+        if (companyType != "1" && companyType != "2")
         {
-            Console.WriteLine(pName);
+            Console.WriteLine("Invalid company type. Please try again.");
+            return;
         }
-    }
-    private static void placeOrder(ProdContext productContext)
-    {
-        Invoice invoice = new Invoice();
-        invoice.InvoiceDetails = new List<InvoiceDetail>();
-        bool continueAdding = true;
-        while (continueAdding)
+        if (companyType == "1")
         {
-            Console.WriteLine("Input product ID:");
-            int productID = Convert.ToInt32(Console.ReadLine());
-            Product? product = productContext.Products.Find(productID);
-            if (product == null)
+            Console.WriteLine("Enter Discount:");
+            int discount = Convert.ToInt32(Console.ReadLine());
+            Customer customer = new Customer
             {
-                Console.WriteLine("Product not found.");
-                return;
-            }
-            Console.WriteLine("Input quantity:");
-            int quantity = Convert.ToInt32(Console.ReadLine());
-            if (quantity > product.UnitsInStock)
-            {
-                Console.WriteLine("Insufficient stock.");
-                return;
-            }
-            InvoiceDetail invoiceDetail = new InvoiceDetail
-            {
-                InvoiceID = invoice.InvoiceID,
-                ProductID = product.ProductID,
-                Quantity = quantity
+                CompanyName = companyName,
+                Street = street,
+                City = city,
+                Zip = zip,
+                Discount = discount
             };
-            productContext.InvoiceDetails.Add(invoiceDetail);
-            product.UnitsInStock -= quantity;
-            product.InvoiceDetails.Add(invoiceDetail);
-            productContext.Products.Update(product);
-            invoice.InvoiceDetails.Add(invoiceDetail);
-            Console.WriteLine("Do you want to add another product to the invoice? (y/[n]):");
-            string option = Console.ReadLine();
-            if (option.ToLower() != "y")
+            productContext.Companies.Add(customer);
+        }
+        else
+        {
+            Console.WriteLine("Enter Bank Account Number:");
+            string bankAccNum = Console.ReadLine();
+            Supplier supplier = new Supplier
             {
-                continueAdding = false;
-                break;
+                CompanyName = companyName,
+                Street = street,
+                City = city,
+                Zip = zip,
+                bankAccountNumber = bankAccNum
+            };
+            productContext.Companies.Add(supplier);
+        }
+        productContext.SaveChanges();
+        Console.WriteLine("Company created successfully.");
+    }
+    private static void viewCompanies(ProdContext productContext)
+    {
+        Console.WriteLine("Choose type of companies:");
+        Console.WriteLine("1 - Customers");
+        Console.WriteLine("2 - Suppliers");
+        Console.WriteLine("Else - All Companies");
+        string companyType = Console.ReadLine();
+        if (companyType == "1")
+        {
+            foreach (var customer in productContext.Customers)
+            {
+                Console.WriteLine(customer);
             }
         }
-
-        productContext.Invoices.Add(invoice);
-        productContext.SaveChanges();
-    }
-    private static void ViewOrders(ProdContext productContext)
-    {
-        var detailsQuery = from det in productContext.InvoiceDetails
-                           select new { det.InvoiceID, det.Product.ProductName, det.Quantity };
-        Console.WriteLine();
-        Console.WriteLine("Invoices List:");
-        foreach (var detail in detailsQuery)
+        else if (companyType == "2")
         {
-            Console.WriteLine(detail);
+            foreach (var supplier in productContext.Suppliers)
+            {
+                Console.WriteLine(supplier);
+            }
+        }
+        else
+        {
+            foreach (var company in productContext.Companies)
+            {
+                Console.WriteLine(company);
+            }
         }
     }
 }
