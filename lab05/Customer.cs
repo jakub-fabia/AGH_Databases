@@ -1,6 +1,8 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
+[Table("Customers")]
 public class Customer : Company
 {
-    public int CustomerId { get; set; }
     public int Discount { get; set; }
 
     public override string ToString()

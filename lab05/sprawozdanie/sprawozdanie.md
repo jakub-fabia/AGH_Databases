@@ -842,4 +842,101 @@ public class Program
 
 #### SELECT * FROM Companies
 
-![](./img/4zad-7.png)
+![](./img/5zad-7.png)
+
+# Zadanie 6
+
+## Klasy
+
+### Supplier
+
+```cs
+using System.ComponentModel.DataAnnotations.Schema;
+
+[Table("Suppliers")]
+public class Supplier : Company
+{
+    public string bankAccountNumber { get; set; }
+    public override string ToString()
+    {
+        return $"{CompanyName} - {Street}, {City}, {Zip} (Bank Account: {bankAccountNumber})";
+    }
+}
+```
+
+### Customer
+
+```cs
+using System.ComponentModel.DataAnnotations.Schema;
+
+[Table("Customers")]
+public class Customer : Company
+{
+    public int Discount { get; set; }
+
+    public override string ToString()
+    {
+        return $"{CompanyName} - {Street}, {City}, {Zip} (Discount: {Discount}%)";
+    }
+}
+```
+
+Reszta pozostaje bez zmian.
+
+## Schemat
+
+![](./img/6zad-0.png)
+
+
+## Działanie
+
+Działanie jest dokładnie takie samo jak w poprzednim zadaniu.
+
+## Stan bazy
+
+#### SELECT * FROM Companies
+
+![](./img/6zad-1.png)
+
+
+#### SELECT * FROM Suppliers
+
+![](./img/6zad-2.png)
+
+#### SELECT * FROM Customers
+
+![](./img/6zad-3.png)
+
+# Zadanie 7 - Porównanie Table-per-Hierarchy i Table-per-Type
+
+## Table-per-Hierarchy
+
+### Opis
+
+Podejście to charakteryzuje się tworzeniem tylko jednej tabeli, w której zapisywane są dane wszystkich klas dziedziczących. Gdy klasa dziedziczące ma kolumnę dodatkową, to dla pozostałych klas w tabeli w tej kolumnie zapisywana jest wartość **null**, a dla tej klasy wartości przypisane do danego obiektu.
+
+### Zalety
+
+- Korzysta z jednej tabeli, więc nie ma potrzeby używania złożonych zapytań z użyciem `JOIN` 
+- Wysoka wydajność operacji CRUD ze względu na konieczność edycji tylko jednej tabeli
+
+### Wady
+
+- Redundancja, bardzo dużo wartości w kolumnach dedykowanych klasie dziedziczącej będą wartością `null` 
+- Z powodu powyższego, możliwa jest naruszenie integralności danych przy ręcznej edycji
+
+## Table-per-Type
+
+### Opis
+
+Podejście to charakteryzuje się tworzeniem tabeli dla nadklasy ze wszystkimi wspólnymi kolumnami oraz dla wszystkich podklas i ich specyficznych, unikalnych kolumn.
+
+### Zalety
+
+- Zachowana jest integralność danych
+- Brak redundancji danych
+
+### Wady
+
+- Wolniejsze wykonywanie operacji CRUD
+- Konieczność używania zapytań z `JOIN`
