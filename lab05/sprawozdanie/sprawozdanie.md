@@ -3,7 +3,7 @@
 
 ### Jakub Fabia, Michał Gontarz
 
-# Stan przed 1 zadaniem
+# Część I
 
 ## Klasy
 
@@ -71,7 +71,9 @@ foreach (var pName in query)
 
 ![](./img/0zad-1.png)
 
-# Zadanie 1
+# Część II
+
+## Zadanie 1
 
 Dodaliśmy nową klasę `Supplier`:
 
@@ -227,44 +229,78 @@ Klasami w których coś się zmieniło są:
 
 ### Program
 
-Zmieniło się od linijki 9 z poprzedniego zadania, wklejam całe wyrażenie warunkowe dla czytelności.
+Zmieniło się od linijki 9 z poprzedniego zadania, wklejam całą klasę (żeby łatwiej było sprawdzić poprawność).
 
 ```cs
-if (option.ToLower() == "y")
+public class Program
 {
-    supplier = createSupplier();
-    supplier.Products.Add(product);
-    productContext.Suppliers.Add(supplier);
-}
-else
-{
-    var suppliersQuery = from prod in productContext.Suppliers select prod;
-    Console.WriteLine();
-    Console.WriteLine("Suppliers List:");
-    foreach (var pName in suppliersQuery)
+    public static void Main()
     {
-        Console.WriteLine(pName);
+        ProdContext productContext = new ProdContext();
+        Product product = createProduct();
+        Supplier? supplier;
+        Console.WriteLine("Create new supplier (y/[n]):");
+        string option = Console.ReadLine();
+        if (option.ToLower() == "y")
+        {
+            supplier = createSupplier();
+            supplier.Products.Add(product);
+            productContext.Suppliers.Add(supplier);
+        }
+        else
+        {
+            var suppliersQuery = from prod in productContext.Suppliers select prod;
+            Console.WriteLine();
+            Console.WriteLine("Suppliers List:");
+            foreach (var pName in suppliersQuery)
+            {
+                Console.WriteLine(pName);
+            }
+            Console.WriteLine("Input supplier ID:");
+            int supplierID = Convert.ToInt32(Console.ReadLine());
+            supplier = productContext.Suppliers.Find(supplierID);
+            if (supplier == null)
+            {
+                Console.WriteLine("Supplier not found.");
+                return;
+            }
+            supplier.Products.Add(product);
+            productContext.Suppliers.Update(supplier);
+        }
+    
+        productContext.Products.Add(product);
+        productContext.SaveChanges();
+        
+        var productsQuery = from prod in productContext.Products select prod;
+
+        Console.WriteLine();
+        Console.WriteLine("Products List:");
+
+        foreach (var pName in productsQuery)
+        {
+            Console.WriteLine(pName);
+        }
     }
-    Console.WriteLine("Input supplier ID:");
-    int supplierID = Convert.ToInt32(Console.ReadLine());
-    supplier = productContext.Suppliers.Find(supplierID);
-    if (supplier == null)
+    private static Product createProduct()
     {
-        Console.WriteLine("Supplier not found.");
-        return;
+        Console.WriteLine("Input product name:");
+        string ProductName = Console.ReadLine();
+        Console.WriteLine("Input product units in stock:");
+        int UnitsInStock = Convert.ToInt32(Console.ReadLine());
+        return new Product { ProductName = ProductName, UnitsInStock = UnitsInStock };
     }
-    supplier.Products.Add(product);
-    productContext.Suppliers.Update(supplier);
+    private static Supplier createSupplier()
+    {
+        Console.WriteLine("Input supplier company name:");
+        string CompanyName = Console.ReadLine();
+        Console.WriteLine("Input supplier city:");
+        string City = Console.ReadLine();
+        Console.WriteLine("Input supplier street:");
+        string Street = Console.ReadLine();
+        return new Supplier { CompanyName = CompanyName, City = City, Street = Street };
+    }
 }
 ```
-
-Oraz usunięto 
-
-```cs
-product.Supplier = supplier;
-```
-
-Zaraz pod tym wyrażeniem.
 
 ### Product
 
@@ -353,7 +389,79 @@ Pozostaje bez zmian.
 Pozostaje bez zmian, za wyjątkiem dodania spowrotem linijki:
 
 ```cs
-product.Supplier = supplier;
+    product.Supplier = supplier;
+```
+
+```cs
+public class Program
+{
+    public static void Main()
+    {
+        ProdContext productContext = new ProdContext();
+        Product product = createProduct();
+        Supplier? supplier;
+        Console.WriteLine("Create new supplier (y/[n]):");
+        string option = Console.ReadLine();
+        if (option.ToLower() == "y")
+        {
+            supplier = createSupplier();
+            supplier.Products.Add(product);
+            productContext.Suppliers.Add(supplier);
+        }
+        else
+        {
+            var suppliersQuery = from prod in productContext.Suppliers select prod;
+            Console.WriteLine();
+            Console.WriteLine("Suppliers List:");
+            foreach (var pName in suppliersQuery)
+            {
+                Console.WriteLine(pName);
+            }
+            Console.WriteLine("Input supplier ID:");
+            int supplierID = Convert.ToInt32(Console.ReadLine());
+            supplier = productContext.Suppliers.Find(supplierID);
+            if (supplier == null)
+            {
+                Console.WriteLine("Supplier not found.");
+                return;
+            }
+            supplier.Products.Add(product);
+            productContext.Suppliers.Update(supplier);
+        }
+
+        product.Supplier = supplier;
+        productContext.Products.Add(product);
+        productContext.SaveChanges();
+        
+        var productsQuery = from prod in productContext.Products select prod;
+
+        Console.WriteLine();
+        Console.WriteLine("Products List:");
+
+        foreach (var pName in productsQuery)
+        {
+            Console.WriteLine(pName);
+        }
+    }
+    private static Product createProduct()
+    {
+        Console.WriteLine("Input product name:");
+        string ProductName = Console.ReadLine();
+        Console.WriteLine("Input product units in stock:");
+        int UnitsInStock = Convert.ToInt32(Console.ReadLine());
+        return new Product { ProductName = ProductName, UnitsInStock = UnitsInStock };
+    }
+    private static Supplier createSupplier()
+    {
+        Console.WriteLine("Input supplier company name:");
+        string CompanyName = Console.ReadLine();
+        Console.WriteLine("Input supplier city:");
+        string City = Console.ReadLine();
+        Console.WriteLine("Input supplier street:");
+        string Street = Console.ReadLine();
+        return new Supplier { CompanyName = CompanyName, City = City, Street = Street };
+    }
+}
 ```
 
 ## Schemat
@@ -506,7 +614,12 @@ public class Program
         string ProductName = Console.ReadLine();
         Console.WriteLine("Input product units in stock:");
         int UnitsInStock = Convert.ToInt32(Console.ReadLine());
-        productContext.Products.Add(new Product { ProductName = ProductName, UnitsInStock = UnitsInStock });
+        productContext.Products.Add(
+            new Product { 
+                ProductName = ProductName, 
+                UnitsInStock = UnitsInStock 
+            }
+        );
         productContext.SaveChanges();
     }
     private static void viewProducts(ProdContext productContext)

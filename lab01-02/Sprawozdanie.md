@@ -552,7 +552,9 @@ begin
         RAISE_APPLICATION_ERROR(-20001, 'There is no person with the given ID');
     end if;
     if not F_VALID_TRIP_ID(p_trip_id) then
-        raise_application_error(-20002, 'There is no trip with given id');
+        raise_application_error(-20002, 'There is no trip with given id')
+```
+```sql
     end if;
     if p_no_tickets < 1 then
         raise_application_error(-20003, 'Number of tickets must be positive');
@@ -597,12 +599,13 @@ begin
     into v_no_available_places, v_date
     from vw_trip
     where trip_id = v_trip_id;
-
     if v_date <= sysdate then
         raise_application_error(-20002, 'It is too late to change a trip status');
     end if;
     if p_status = v_status then
-        raise_application_error(-20004, 'The reservation already has such status');
+        raise_application_error(-20004, 'The reservation already has such status')
+```
+```sql
     end if;
 
     if (p_status in ('N', 'P') and v_status = 'C' and v_no_tickets > v_no_available_places) then
@@ -791,6 +794,8 @@ begin
     end if;
     if not F_VALID_TRIP_ID(p_trip_id) then
         raise_application_error(-20002, 'There is no trip with given id');
+```
+```sql
     end if;
     if p_no_tickets < 1 then
         raise_application_error(-20003, 'Number of tickets must be positive');
@@ -833,8 +838,10 @@ begin
     where trip_id = v_trip_id;
 
     if v_date <= sysdate then
-        raise_application_error(-20002, 'It is too late to change a trip status');
+        raise_application_error(-20002, 'It is too late to change a trip status')
     end if;
+```
+```sql
     if p_status = v_status then
         raise_application_error(-20004, 'The reservation already has such status');
     end if;
@@ -1034,6 +1041,8 @@ begin
     if not F_VALID_TRIP_ID(p_trip_id) then
         raise_application_error(-20002, 'There is no trip with given id');
     end if;
+```
+```sql
     if p_no_tickets < 1 then
         raise_application_error(-20003, 'Number of tickets must be positive');
     end if;
@@ -1212,8 +1221,10 @@ begin
     if not F_VALID_TRIP_ID(p_trip_id) then
         raise_application_error(-20002, 'There is no trip with given id');
     end if;
+```
+```sql
     if p_no_tickets < 1 then
-        raise_application_error(-20003, 'Number of tickets must be positive');
+        raise_application_error(-20003, 'Number of tickets must be positive')
     end if;
     
     select no_available_places into v_no_available_places 
@@ -1531,6 +1542,8 @@ begin
     if not F_VALID_TRIP_ID(p_trip_id) then
         raise_application_error(-20002, 'There is no trip with given id');
     end if;
+```
+```sql
     if p_no_tickets < 1 then
         raise_application_error(-20003, 'Number of tickets must be positive');
     end if;
@@ -1553,6 +1566,8 @@ begin
     if not F_VALID_TRIP_ID(p_trip_id) then
         raise_application_error(-20002, 'There is no trip with given id');
     end if;
+```
+```sql
     if p_no_tickets < 1 then
         raise_application_error(-20003, 'Number of tickets must be positive');
     end if;

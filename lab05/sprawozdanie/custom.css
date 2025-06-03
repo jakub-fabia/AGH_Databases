@@ -1,0 +1,19 @@
+pre code {
+  font-size: 0.85em;
+}
+
+h1 {
+  break-before: page;
+}
+
+img, figure {
+  break-inside: avoid;
+  break-before: avoid;
+  break-after: avoid;
+}
+
+img,
+figure img {
+  width: 80% !important;
+  height: auto !important;
+}
