@@ -11,7 +11,7 @@
 
 ## Tabele
 
-![](./schema.png)
+![](./img/schema.png)
 
 
 - `Trip`  - wycieczki
